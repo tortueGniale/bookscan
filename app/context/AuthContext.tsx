@@ -1,58 +1,109 @@
 'use client';
 
-import React, { createContext, useState } from 'react';
+import React, { createContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '../supabaseClient';
+import { User } from '@supabase/supabase-js';
+
+type BookScanUser = User & { role: string | null };
 
 interface AuthContextType {
-  isAuthenticated: boolean;
-  login: (username: string, password: string) => void;
-  logout: () => void;
+    isAuthenticated: boolean;
+    user: BookScanUser | null;
+    login: (username: string, password: string) => void;
+    logout: () => void;
 }
 
 export const AuthContext = createContext<AuthContextType>({
-  isAuthenticated: false,
-  login: () => {},
-  logout: () => {},
+    isAuthenticated: false,
+    user: null,
+    login: () => { },
+    logout: () => { },
 });
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const router = useRouter();
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [user, setUser] = useState<BookScanUser | null>(null);
+    const router = useRouter();
 
-  const login = async (username: string, password: string) => {
-    //call supabase
-    const supabaseUrl = 'https://zocebttubmqoajrzfiyi.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpvY2VidHR1Ym1xb2FqcnpmaXlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU4MzYxNzcsImV4cCI6MjA1MTQxMjE3N30.9ioW43CYTShqUPIUB1mQrZ4O2xxvaXPg8z0jZ_jtiu4';
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    useEffect(() => {
+        const checkSession = async () => {
+            const { data, error } = await supabase.auth.getSession();
+            if (error) {
+                console.error('Error getting session:', error);
+                return;
+            }
+            if (data.session) {
+                setIsAuthenticated(true);
+                setUser(data.session.user as BookScanUser);
+                router.push('/');
+            }
+        };
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-        email: username,
-        password: password,
-    });
+        checkSession();
 
-    if (error) {
-        console.error('Error logging in:', error);
-        return;
-    }
+        const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+            if (session) {
+                setIsAuthenticated(true);
+                setUser(session.user as BookScanUser);
+                router.push('/');
+            } else {
+                setIsAuthenticated(false);
+                setUser(null);
+                router.push('/login');
+            }
+        });
 
-    if (data) {
-        setIsAuthenticated(true);
-        router.push('/');
-    }else{
-        console.log('No data found');
-    }
+        return () => {
+            authListener?.subscription.unsubscribe();
+        };
+    }, [router]);
 
-  };
+    const login = async (username: string, password: string) => {
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email: username,
+            password: password,
+        });
 
-  const logout = () => {
-    setIsAuthenticated(false);
-    router.push('/login');
-  };
+        if (error) {
+            console.error('Error logging in:', error);
+            return;
+        }
 
-  return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
-      {children}
-    </AuthContext.Provider>
-  );
+        if (data) {
+            
+            const { data: profile, error: profileError } = await supabase
+                .from('profiles')
+                .select('role')
+                .eq('user_id', data.user?.id)
+                .single();
+
+            if (profileError) {
+                console.error('Error getting role in:', profileError);
+                return;
+            }
+            setUser({...data.user, role: profile?.role});
+            setIsAuthenticated(true);
+            router.push('/');
+        } else {
+            console.log('No data found');
+        }
+    };
+
+    const logout = async () => {
+        const { error } = await supabase.auth.signOut();
+        if (error) {
+            console.error('Error logging out:', error);
+            return;
+        }
+        setIsAuthenticated(false);
+        setUser(null);
+        router.push('/login');
+    };
+
+    return (
+        <AuthContext.Provider value={{ isAuthenticated, user, login, logout }}>
+            {children}
+        </AuthContext.Provider>
+    );
 };

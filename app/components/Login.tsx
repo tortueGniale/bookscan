@@ -8,11 +8,9 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const { login } = useContext(AuthContext);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    console.log('login in');
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     login(username, password);
-    console.log('login');
   };
 
   return (
