@@ -3,13 +3,17 @@
 import React, { createContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../supabaseClient';
-import { User } from '@supabase/supabase-js';
+import { Session, User } from '@supabase/supabase-js';
 
-type BookScanUser = User & { role: string | null };
+type Profile = {
+    role: string | null
+};
 
 interface AuthContextType {
     isAuthenticated: boolean;
-    user: BookScanUser | null;
+    user: User | null;
+    profile: Profile | null;
+    loading: boolean;
     login: (username: string, password: string) => void;
     logout: () => void;
 }
@@ -17,27 +21,48 @@ interface AuthContextType {
 export const AuthContext = createContext<AuthContextType>({
     isAuthenticated: false,
     user: null,
+    profile: null,
+    loading: true,
     login: () => { },
     logout: () => { },
 });
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [user, setUser] = useState<BookScanUser | null>(null);
+    const [user, setUser] = useState<User | null>(null);
+    const [profile, setProfile] = useState<Profile | null>({role: null});
+    const [loading, setLoading] = useState(true);
     const router = useRouter();
+
+    const getProfile = async (session: Session) => {
+        const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('user_id', session.user?.id)
+            .single();
+
+        if (profileError) {
+            console.error('Error getting role in:', profileError);
+            return;
+        }
+        const userProfile = {role: profile.role}; 
+        setProfile(userProfile);
+    };
 
     useEffect(() => {
         const checkSession = async () => {
             const { data, error } = await supabase.auth.getSession();
             if (error) {
                 console.error('Error getting session:', error);
+                setLoading(false);
                 return;
             }
             if (data.session) {
                 setIsAuthenticated(true);
-                setUser(data.session.user as BookScanUser);
-                router.push('/');
+                setUser(data.session.user);
+                await getProfile(data.session);
             }
+            setLoading(false);
         };
 
         checkSession();
@@ -45,13 +70,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
             if (session) {
                 setIsAuthenticated(true);
-                setUser(session.user as BookScanUser);
-                router.push('/');
+                setUser(session.user);
+                getProfile(session);
             } else {
                 setIsAuthenticated(false);
                 setUser(null);
+                setProfile({role: null});
                 router.push('/login');
             }
+            //setLoading(false);
         });
 
         return () => {
@@ -71,18 +98,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
 
         if (data) {
-            
-            const { data: profile, error: profileError } = await supabase
-                .from('profiles')
-                .select('role')
-                .eq('user_id', data.user?.id)
-                .single();
-
-            if (profileError) {
-                console.error('Error getting role in:', profileError);
-                return;
-            }
-            setUser({...data.user, role: profile?.role});
+            await getProfile(data.session);
+            setUser(data.user);
             setIsAuthenticated(true);
             router.push('/');
         } else {
@@ -102,7 +119,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     return (
-        <AuthContext.Provider value={{ isAuthenticated, user, login, logout }}>
+        <AuthContext.Provider value={{ isAuthenticated, user, profile: profile, loading, login, logout }}>
             {children}
         </AuthContext.Provider>
     );

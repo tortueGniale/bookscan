@@ -1,19 +1,11 @@
 'use client';
 
-import { useContext, useEffect } from 'react';
+import { useContext } from 'react';
 import { AuthContext } from './context/AuthContext';
 import ScanInput from "./components/ScanInput";
-import { useRouter } from 'next/navigation';
 
 export default function Home() {
   const { isAuthenticated } = useContext(AuthContext);
-  const router = useRouter();
-
-  useEffect(() => {
-    if (!isAuthenticated) {
-      router.push('/login');
-    }
-  }, [isAuthenticated, router]);
 
   if (!isAuthenticated) {
     return null; // Or a loading spinner

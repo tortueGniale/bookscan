@@ -5,24 +5,26 @@ import { useRouter } from 'next/navigation';
 import { AuthContext } from '../context/AuthContext';
 
 export default function AdminPage() {
-  const { user, isAuthenticated } = useContext(AuthContext);
-  const router = useRouter();
+    const { user, profile, isAuthenticated, loading } = useContext(AuthContext);
+    const router = useRouter();
 
-  useEffect(() => {
-    console.log(user);
-    if (!isAuthenticated || user?.role !== 'admin') {
-      router.push('/');
+    useEffect(() => {
+        if (!loading) {
+            if (!isAuthenticated || !user || !profile || profile.role !== 'admin') {
+                console.log('Redirecting to /', isAuthenticated, user, profile, loading);
+                router.push('/');
+            }
+        }
+    }, [isAuthenticated, user, profile, loading, router]);
+
+    if (loading) {
+        return (<div>Loading...</div>);
     }
-  }, [isAuthenticated, user, router]);
 
-  if (!isAuthenticated || user?.role !== 'admin') {
-    return null; // Or a loading spinner
-  }
-
-  return (
-    <div>
-      <h1>Admin Page</h1>
-      <p>Welcome, {user.email}. You have admin access.</p>
-    </div>
-  );
+    return (
+        <div>
+            <h1>Admin Page</h1>
+            <p>Welcome, {user?.email}. You have admin access.</p>
+        </div>
+    );
 }
