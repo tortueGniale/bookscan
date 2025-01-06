@@ -3,6 +3,7 @@
 import React, { useContext, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { AuthContext } from '../context/AuthContext';
+import Header from '../components/Header';
 
 export default function AdminPage() {
     const { user, profile, isAuthenticated, loading } = useContext(AuthContext);
@@ -23,6 +24,7 @@ export default function AdminPage() {
 
     return (
         <div>
+            <Header /> 
             <h1>Admin Page</h1>
             <p>Welcome, {user?.email}. You have admin access.</p>
         </div>

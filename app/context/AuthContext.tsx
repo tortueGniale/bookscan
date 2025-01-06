@@ -30,7 +30,7 @@ export const AuthContext = createContext<AuthContextType>({
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [user, setUser] = useState<User | null>(null);
-    const [profile, setProfile] = useState<Profile | null>({role: null});
+    const [profile, setProfile] = useState<Profile | null>({ role: null });
     const [loading, setLoading] = useState(true);
     const router = useRouter();
 
@@ -45,7 +45,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             console.error('Error getting role in:', profileError);
             return;
         }
-        const userProfile = {role: profile.role}; 
+        const userProfile = { role: profile.role };
         setProfile(userProfile);
     };
 
@@ -75,7 +75,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             } else {
                 setIsAuthenticated(false);
                 setUser(null);
-                setProfile({role: null});
+                setProfile({ role: null });
                 router.push('/login');
             }
             //setLoading(false);
