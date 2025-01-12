@@ -6,7 +6,8 @@ import { supabase } from '../supabaseClient';
 import { Session, User } from '@supabase/supabase-js';
 
 type Profile = {
-    role: string | null
+    role: string | null;
+    id: number;
 };
 
 interface AuthContextType {
@@ -30,14 +31,14 @@ export const AuthContext = createContext<AuthContextType>({
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [user, setUser] = useState<User | null>(null);
-    const [profile, setProfile] = useState<Profile | null>({ role: null });
+    const [profile, setProfile] = useState<Profile | null>(null);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
 
     const getProfile = async (session: Session) => {
         const { data: profile, error: profileError } = await supabase
             .from('profiles')
-            .select('role')
+            .select('role, id')
             .eq('user_id', session.user?.id)
             .single();
 
@@ -45,7 +46,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             console.error('Error getting role in:', profileError);
             return;
         }
-        const userProfile = { role: profile.role };
+        const userProfile = { role: profile.role, id: profile.id };
         setProfile(userProfile);
     };
 
@@ -75,7 +76,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             } else {
                 setIsAuthenticated(false);
                 setUser(null);
-                setProfile({ role: null });
+                setProfile(null);
                 router.push('/login');
             }
             //setLoading(false);
