@@ -69,7 +69,7 @@ export default function ScanInput() {
         </div>
       }
       {!isFocused &&
-        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '20px' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '20px', fontSize: '24px' }}>
           Veuillez cliquer sur la fenêtre pour démarrer.
         </div>
       }
