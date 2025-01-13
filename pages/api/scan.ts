@@ -17,7 +17,8 @@ type ParsedScanResponseItem =
   
 
 type UnparsedScan = {
-  googleBooksData: Record<string, unknown>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  googleBooksData: any;
   barcodeValue: string;
 };
 
@@ -47,6 +48,7 @@ function postHandler(req: NextApiRequest, res: NextApiResponse<ParsedScan>) {
       .then(response => response.json())
       .then(data => {
         if (data.totalItems > 0) {
+          console.log('Book found:', data.items[0]);
           const book = data.items[0].volumeInfo;
           const unparsedScan:UnparsedScan = { googleBooksData: book, barcodeValue: barcodeValue };
           const parsedScan:ParsedScan = parseScan(unparsedScan);
@@ -95,7 +97,7 @@ function parseScan(unparsedScan : UnparsedScan): ParsedScan{
   const parsedScan:ParsedScan = {
     score: 1,
     title: unparsedScan.googleBooksData.title as string,
-    image: unparsedScan.googleBooksData.previewLink as string,
+    image: unparsedScan.googleBooksData.imageLinks?.thumbnail as string,
     barcode_scanned: unparsedScan.barcodeValue,
     isbn10: (unparsedScan.googleBooksData.industryIdentifiers as { type: string; identifier: string; }[])?.find((identifier: { type: string; }) => identifier.type === 'ISBN_10')?.identifier as string,
     isbn13: (unparsedScan.googleBooksData.industryIdentifiers as { type: string; identifier: string; }[])?.find((identifier: { type: string; }) => identifier.type === 'ISBN_13')?.identifier as string,
