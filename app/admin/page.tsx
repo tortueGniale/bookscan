@@ -49,11 +49,13 @@ export default function AdminPage() {
   return (
     <div>
       <Header />
-      <table className="min-w-full bg-white border border-gray-200">
+    <table className="min-w-full border border-gray-200 mt-14 bg-white text-black"> 
         <thead>
           <tr>
             <th className="py-2 px-4 border-b text-left">Titre</th>
             <th className="py-2 px-4 border-b text-left">Image</th>
+            <th className="py-2 px-4 border-b text-left">Code barre</th>
+            <th className="py-2 px-4 border-b text-left">Score</th>
             <th className="py-2 px-4 border-b text-left">Date du scan</th>
             <th className="py-2 px-4 border-b text-left">Scanné par</th>
           </tr>
@@ -63,6 +65,8 @@ export default function AdminPage() {
             <tr key={row.id} className="hover:bg-gray-100">
               <td className="py-2 px-4 border-b">{row.title}</td>
                 <td className="py-2 px-4 border-b"><img src={row.image} alt={row.title} className="h-16" /></td>
+                <td className="py-2 px-4 border-b">{row.barcode_scanned}</td>
+                <td className="py-2 px-4 border-b">{row.score}</td>
               <td className="py-2 px-4 border-b">{new Date(row.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })} {new Date(row.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</td>
               <td className="py-2 px-4 border-b">{row.profiles?.username}</td>
             </tr>

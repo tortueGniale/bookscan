@@ -12,7 +12,7 @@ const Header = () => {
         console.log('Header rendered');
     }, [router]);
     return (
-        <header className='flex space-x-4 pr-4 pt-4 mb-4 justify-end'>
+        <header className='flex space-x-4 pr-4 pt-4 justify-end' style={{ position: 'absolute', right: 0, top: 0, width: '100%' }}>
             {profile?.role === 'admin' && pathname !== '/admin' && <Link href="/admin">Admin</Link>}
             {pathname !== '/' && <Link href="/">Accueil</Link>}
             <a onClick={logout} style={{ cursor: 'pointer' }}>Se déconnecter</a>
